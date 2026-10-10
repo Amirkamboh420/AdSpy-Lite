@@ -1,0 +1,857 @@
+     1→"use client";
+     2→
+     3→import { useState } from "react";
+     4→import { Card } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Badge } from "@/components/ui/badge";
+     7→import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+     8→import { Input } from "@/components/ui/input";
+     9→import { Label } from "@/components/ui/label";
+    10→import { Switch } from "@/components/ui/switch";
+    11→import { Separator } from "@/components/ui/separator";
+    12→import {
+    13→  Select,
+    14→  SelectContent,
+    15→  SelectItem,
+    16→  SelectTrigger,
+    17→  SelectValue,
+    18→} from "@/components/ui/select";
+    19→import {
+    20→  Dialog,
+    21→  DialogContent,
+    22→  DialogDescription,
+    23→  DialogFooter,
+    24→  DialogHeader,
+    25→  DialogTitle,
+    26→  DialogTrigger,
+    27→  DialogClose,
+    28→} from "@/components/ui/dialog";
+    29→import {
+    30→  Settings,
+    31→  User,
+    32→  Bell,
+    33→  RefreshCw,
+    34→  Puzzle,
+    35→  Shield,
+    36→  Trash2,
+    37→  Check,
+    38→  Mail,
+    39→  Download,
+    40→  Database,
+    41→  Chrome,
+    42→  Lock,
+    43→  AlertTriangle,
+    44→  Save,
+    45→  KeyRound,
+    46→  Eye,
+    47→  HardDrive,
+    48→  Sparkles,
+    49→  Keyboard,
+    50→  RotateCcw,
+    51→  Info,
+    52→} from "lucide-react";
+    53→import { sonnerToast } from "@/lib/toast-helpers";
+    54→import { useAppStore } from "@/lib/store";
+    55→import { cn } from "@/lib/utils";
+    56→
+    57→type SectionId =
+    58→  | "account"
+    59→  | "notifications"
+    60→  | "sync"
+    61→  | "extension"
+    62→  | "privacy"
+    63→  | "about"
+    64→  | "danger";
+    65→
+    66→const navItems: {
+    67→  id: SectionId;
+    68→  label: string;
+    69→  icon: React.ElementType;
+    70→  desc: string;
+    71→}[] = [
+    72→  { id: "account", label: "Account", icon: User, desc: "Profile & connected accounts" },
+    73→  { id: "notifications", label: "Notifications", icon: Bell, desc: "Email & alert preferences" },
+    74→  { id: "sync", label: "Sync & Data", icon: RefreshCw, desc: "Auto-sync & exports" },
+    75→  { id: "extension", label: "Extension", icon: Puzzle, desc: "Chrome extension status" },
+    76→  { id: "privacy", label: "Privacy", icon: Shield, desc: "Data retention & GDPR" },
+    77→  { id: "about", label: "About & Help", icon: Info, desc: "Onboarding, shortcuts, version" },
+    78→  { id: "danger", label: "Danger Zone", icon: AlertTriangle, desc: "Account deletion" },
+    79→];
+    80→
+    81→export function SettingsView() {
+    82→  const [section, setSection] = useState<SectionId>("account");
+    83→
+    84→  return (
+    85→    <div className="space-y-6">
+    86→      {/* Header */}
+    87→      <div className="flex items-start gap-4">
+    88→        <div className="h-12 w-12 rounded-xl bg-sunset-gradient flex items-center justify-center shrink-0 shadow-sm">
+    89→          <Settings className="h-6 w-6 text-white" />
+    90→        </div>
+    91→        <div>
+    92→          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Settings</h1>
+    93→          <p className="text-sm text-muted-foreground">
+    94→            Manage your account, notifications &amp; sync preferences
+    95→          </p>
+    96→        </div>
+    97→      </div>
+    98→
+    99→      <div className="grid lg:grid-cols-[220px_1fr] gap-6">
+   100→        {/* Left vertical nav */}
+   101→        <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
+   102→          {navItems.map((item) => {
+   103→            const active = section === item.id;
+   104→            const Icon = item.icon;
+   105→            return (
+   106→              <button
+   107→                key={item.id}
+   108→                onClick={() => setSection(item.id)}
+   109→                className={cn(
+   110→                  "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-all whitespace-nowrap lg:whitespace-normal group",
+   111→                  active
+   112→                    ? "bg-sunset-gradient text-white shadow-sm"
+   113→                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+   114→                )}
+   115→              >
+   116→                <Icon className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-sunset-deep")} />
+   117→                <div className="min-w-0">
+   118→                  <p className={cn("text-sm font-medium", active && "text-white")}>{item.label}</p>
+   119→                  <p
+   120→                    className={cn(
+   121→                      "text-[10px] leading-tight hidden lg:block",
+   122→                      active ? "text-white/80" : "text-muted-foreground/70"
+   123→                    )}
+   124→                  >
+   125→                    {item.desc}
+   126→                  </p>
+   127→                </div>
+   128→              </button>
+   129→            );
+   130→          })}
+   131→        </nav>
+   132→
+   133→        {/* Active section content */}
+   134→        <div className="min-w-0">
+   135→          {section === "account" && <AccountSection />}
+   136→          {section === "notifications" && <NotificationsSection />}
+   137→          {section === "sync" && <SyncSection />}
+   138→          {section === "extension" && <ExtensionSection />}
+   139→          {section === "privacy" && <PrivacySection />}
+   140→          {section === "about" && <AboutSection />}
+   141→          {section === "danger" && <DangerSection />}
+   142→        </div>
+   143→      </div>
+   144→    </div>
+   145→  );
+   146→}
+   147→
+   148→/* ---------------- Account ---------------- */
+   149→
+   150→function AccountSection() {
+   151→  const [metaConnected, setMetaConnected] = useState(true);
+   152→  const [googleConnected, setGoogleConnected] = useState(false);
+   153→
+   154→  return (
+   155→    <div className="space-y-6">
+   156→      <Card className="p-5">
+   157→        <div className="mb-4">
+   158→          <h2 className="font-semibold flex items-center gap-2">
+   159→            <User className="h-4 w-4 text-sunset-deep" /> Profile
+   160→          </h2>
+   161→          <p className="text-xs text-muted-foreground mt-0.5">
+   162→            Update your personal information and avatar
+   163→          </p>
+   164→        </div>
+   165→
+   166→        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-5">
+   167→          <Avatar className="h-16 w-16 bg-sunset-gradient">
+   168→            <AvatarFallback className="bg-transparent text-white text-xl font-bold">AK</AvatarFallback>
+   169→          </Avatar>
+   170→          <div className="space-y-1.5">
+   171→            <Button size="sm" variant="outline" onClick={() => sonnerToast.success("Avatar upload started")}>
+   172→              <Download className="h-3.5 w-3.5 mr-1.5" />
+   173→              Upload new
+   174→            </Button>
+   175→            <p className="text-[11px] text-muted-foreground">PNG or JPG. Max 2MB.</p>
+   176→          </div>
+   177→        </div>
+   178→
+   179→        <div className="grid sm:grid-cols-2 gap-4">
+   180→          <div className="space-y-1.5">
+   181→            <Label htmlFor="settings-name" className="text-xs">Full name</Label>
+   182→            <Input id="settings-name" defaultValue="Ayesha Khan" />
+   183→          </div>
+   184→          <div className="space-y-1.5">
+   185→            <Label htmlFor="settings-email" className="text-xs">Email address</Label>
+   186→            <Input id="settings-email" type="email" defaultValue="ayesha@adspy.agency" />
+   187→          </div>
+   188→          <div className="space-y-1.5">
+   189→            <Label htmlFor="settings-company" className="text-xs">Company / Agency</Label>
+   190→            <Input id="settings-company" defaultValue="AdSpy Agency" />
+   191→          </div>
+   192→          <div className="space-y-1.5">
+   193→            <Label htmlFor="settings-role" className="text-xs">Role</Label>
+   194→            <Input id="settings-role" defaultValue="Performance Marketer" />
+   195→          </div>
+   196→        </div>
+   197→
+   198→        <Separator className="my-5" />
+   199→
+   200→        <div className="flex items-center justify-end gap-2">
+   201→          <Button variant="ghost" size="sm" onClick={() => sonnerToast.info("Changes discarded")}>
+   202→            Cancel
+   203→          </Button>
+   204→          <Button
+   205→            size="sm"
+   206→            className="bg-sunset-gradient text-white hover:opacity-90"
+   207→            onClick={() => sonnerToast.success("Profile saved successfully")}
+   208→          >
+   209→            <Save className="h-3.5 w-3.5 mr-1.5" />
+   210→            Save changes
+   211→          </Button>
+   212→        </div>
+   213→      </Card>
+   214→
+   215→      <Card className="p-5">
+   216→        <div className="mb-4">
+   217→          <h2 className="font-semibold flex items-center gap-2">
+   218→            <KeyRound className="h-4 w-4 text-sunset-deep" /> Connected Accounts
+   219→          </h2>
+   220→          <p className="text-xs text-muted-foreground mt-0.5">
+   221→            Link accounts to enable ad scraping and single sign-on
+   222→          </p>
+   223→        </div>
+   224→
+   225→        <div className="space-y-3">
+   226→          <ConnectedAccountRow
+   227→            name="Meta (Facebook)"
+   228→            handle="@khaadi.official"
+   229→            color="#1877F2"
+   230→            connected={metaConnected}
+   231→            onToggle={(v) => {
+   232→              setMetaConnected(v);
+   233→              sonnerToast.success(v ? "Meta account connected" : "Meta account disconnected");
+   234→            }}
+   235→          />
+   236→          <Separator />
+   237→          <ConnectedAccountRow
+   238→            name="Google"
+   239→            handle="ayesha@adspy.agency"
+   240→            color="#EA4335"
+   241→            connected={googleConnected}
+   242→            onToggle={(v) => {
+   243→              setGoogleConnected(v);
+   244→              sonnerToast.success(v ? "Google account connected" : "Google account disconnected");
+   245→            }}
+   246→          />
+   247→        </div>
+   248→      </Card>
+   249→    </div>
+   250→  );
+   251→}
+   252→
+   253→function ConnectedAccountRow({
+   254→  name,
+   255→  handle,
+   256→  color,
+   257→  connected,
+   258→  onToggle,
+   259→}: {
+   260→  name: string;
+   261→  handle: string;
+   262→  color: string;
+   263→  connected: boolean;
+   264→  onToggle: (v: boolean) => void;
+   265→}) {
+   266→  return (
+   267→    <div className="flex items-center justify-between gap-3">
+   268→      <div className="flex items-center gap-3 min-w-0">
+   269→        <div
+   270→          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 text-white text-xs font-bold"
+   271→          style={{ backgroundColor: color }}
+   272→        >
+   273→          {name.charAt(0)}
+   274→        </div>
+   275→        <div className="min-w-0">
+   276→          <p className="text-sm font-medium truncate">{name}</p>
+   277→          <p className="text-xs text-muted-foreground truncate">{handle}</p>
+   278→        </div>
+   279→      </div>
+   280→      <div className="flex items-center gap-3 shrink-0">
+   281→        {connected && (
+   282→          <Badge className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400 text-[10px]">
+   283→            Connected
+   284→          </Badge>
+   285→        )}
+   286→        <Switch checked={connected} onCheckedChange={onToggle} />
+   287→      </div>
+   288→    </div>
+   289→  );
+   290→}
+   291→
+   292→/* ---------------- Notifications ---------------- */
+   293→
+   294→function NotificationsSection() {
+   295→  const [prefs, setPrefs] = useState({
+   296→    alerts: true,
+   297→    digest: true,
+   298→    product: true,
+   299→    security: true,
+   300→    marketing: false,
+   301→  });
+   302→
+   303→  const items: { key: keyof typeof prefs; label: string; desc: string; icon: React.ElementType }[] = [
+   304→    { key: "alerts", label: "New ad alerts from competitors", desc: "Get notified when a tracked competitor launches new ads", icon: Bell },
+   305→    { key: "digest", label: "Weekly digest email", desc: "Summary of saved ads, top trends & competitor activity every Monday", icon: Mail },
+   306→    { key: "product", label: "Product updates", desc: "New features, changelog & roadmap announcements", icon: Puzzle },
+   307→    { key: "security", label: "Security alerts", desc: "Login attempts, password changes & API key activity", icon: Shield },
+   308→    { key: "marketing", label: "Marketing emails", desc: "Tips, case studies & occasional promotional offers", icon: Mail },
+   309→  ];
+   310→
+   311→  return (
+   312→    <Card className="p-5">
+   313→      <div className="mb-4">
+   314→        <h2 className="font-semibold flex items-center gap-2">
+   315→          <Bell className="h-4 w-4 text-sunset-deep" /> Notification Preferences
+   316→        </h2>
+   317→        <p className="text-xs text-muted-foreground mt-0.5">
+   318→          Choose what we email you and when
+   319→        </p>
+   320→      </div>
+   321→
+   322→      <div className="divide-y">
+   323→        {items.map((item) => {
+   324→          const Icon = item.icon;
+   325→          const checked = prefs[item.key];
+   326→          return (
+   327→            <div key={item.key} className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0">
+   328→              <div className="h-8 w-8 rounded-lg bg-sunset-cream/40 flex items-center justify-center shrink-0">
+   329→                <Icon className="h-4 w-4 text-sunset-deep" />
+   330→              </div>
+   331→              <div className="flex-1 min-w-0">
+   332→                <p className="text-sm font-medium">{item.label}</p>
+   333→                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+   334→              </div>
+   335→              <Switch
+   336→                checked={checked}
+   337→                onCheckedChange={(v) => {
+   338→                  setPrefs((p) => ({ ...p, [item.key]: v }));
+   339→                  sonnerToast.success(`${item.label} ${v ? "enabled" : "disabled"}`);
+   340→                }}
+   341→              />
+   342→            </div>
+   343→          );
+   344→        })}
+   345→      </div>
+   346→    </Card>
+   347→  );
+   348→}
+   349→
+   350→/* ---------------- Sync & Data ---------------- */
+   351→
+   352→function SyncSection() {
+   353→  const [autoSync, setAutoSync] = useState(true);
+   354→  const [frequency, setFrequency] = useState("30m");
+   355→
+   356→  return (
+   357→    <div className="space-y-6">
+   358→      <Card className="p-5">
+   359→        <div className="mb-4">
+   360→          <h2 className="font-semibold flex items-center gap-2">
+   361→            <RefreshCw className="h-4 w-4 text-sunset-deep" /> Auto-Sync
+   362→          </h2>
+   363→          <p className="text-xs text-muted-foreground mt-0.5">
+   364→            Keep your saved ads and competitor data fresh automatically
+   365→          </p>
+   366→        </div>
+   367→
+   368→        <div className="flex items-start gap-3 py-3">
+   369→          <div className="h-8 w-8 rounded-lg bg-sunset-cream/40 flex items-center justify-center shrink-0">
+   370→            <RefreshCw className="h-4 w-4 text-sunset-deep" />
+   371→          </div>
+   372→          <div className="flex-1">
+   373→            <p className="text-sm font-medium">Enable auto-sync</p>
+   374→            <p className="text-xs text-muted-foreground mt-0.5">
+   375→              Periodically re-check active ads and pull new creatives from tracked competitors
+   376→            </p>
+   377→          </div>
+   378→          <Switch
+   379→            checked={autoSync}
+   380→            onCheckedChange={(v) => {
+   381→              setAutoSync(v);
+   382→              sonnerToast.success(`Auto-sync ${v ? "enabled" : "disabled"}`);
+   383→            }}
+   384→          />
+   385→        </div>
+   386→
+   387→        <Separator className="my-2" />
+   388→
+   389→        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+   390→          <div>
+   391→            <Label className="text-sm font-medium">Sync frequency</Label>
+   392→            <p className="text-xs text-muted-foreground mt-0.5">How often we check for new ads</p>
+   393→          </div>
+   394→          <Select
+   395→            value={frequency}
+   396→            onValueChange={(v) => {
+   397→              setFrequency(v);
+   398→              sonnerToast.success(`Sync frequency updated`);
+   399→            }}
+   400→            disabled={!autoSync}
+   401→          >
+   402→            <SelectTrigger className="w-full sm:w-[180px]">
+   403→              <SelectValue placeholder="Select interval" />
+   404→            </SelectTrigger>
+   405→            <SelectContent>
+   406→              <SelectItem value="15m">Every 15 minutes</SelectItem>
+   407→              <SelectItem value="30m">Every 30 minutes</SelectItem>
+   408→              <SelectItem value="1h">Every hour</SelectItem>
+   409→              <SelectItem value="6h">Every 6 hours</SelectItem>
+   410→              <SelectItem value="24h">Once a day</SelectItem>
+   411→            </SelectContent>
+   412→          </Select>
+   413→        </div>
+   414→      </Card>
+   415→
+   416→      <Card className="p-5">
+   417→        <div className="mb-4">
+   418→          <h2 className="font-semibold flex items-center gap-2">
+   419→            <Database className="h-4 w-4 text-sunset-deep" /> Data Management
+   420→          </h2>
+   421→          <p className="text-xs text-muted-foreground mt-0.5">
+   422→            Export your data or free up local storage
+   423→          </p>
+   424→        </div>
+   425→
+   426→        <div className="grid sm:grid-cols-2 gap-3">
+   427→          <button
+   428→            onClick={() => sonnerToast.success("Export started — we'll email you a download link")}
+   429→            className="flex items-start gap-3 p-4 rounded-lg border border-border/60 hover:border-sunset-orange/40 hover:bg-muted/30 transition-all text-left"
+   430→          >
+   431→            <div className="h-9 w-9 rounded-lg bg-sunset-gradient flex items-center justify-center shrink-0">
+   432→              <Download className="h-4 w-4 text-white" />
+   433→            </div>
+   434→            <div className="flex-1 min-w-0">
+   435→              <p className="text-sm font-medium">Export all my data</p>
+   436→              <p className="text-xs text-muted-foreground mt-0.5">
+   437→                Download every saved ad, note, folder &amp; tag as JSON
+   438→              </p>
+   439→            </div>
+   440→          </button>
+   441→
+   442→          <button
+   443→            onClick={() => sonnerToast.success("Cache cleared — freed 38.4 MB")}
+   444→            className="flex items-start gap-3 p-4 rounded-lg border border-border/60 hover:border-sunset-orange/40 hover:bg-muted/30 transition-all text-left"
+   445→          >
+   446→            <div className="h-9 w-9 rounded-lg bg-sunset-cream/60 flex items-center justify-center shrink-0">
+   447→              <HardDrive className="h-4 w-4 text-sunset-deep" />
+   448→            </div>
+   449→            <div className="flex-1 min-w-0">
+   450→              <p className="text-sm font-medium">Clear cache</p>
+   451→              <p className="text-xs text-muted-foreground mt-0.5">
+   452→                Remove cached thumbnails &amp; metadata. Saved ads stay intact
+   453→              </p>
+   454→              <p className="text-[10px] text-muted-foreground mt-1">Currently using 38.4 MB</p>
+   455→            </div>
+   456→          </button>
+   457→        </div>
+   458→      </Card>
+   459→    </div>
+   460→  );
+   461→}
+   462→
+   463→/* ---------------- Extension ---------------- */
+   464→
+   465→function ExtensionSection() {
+   466→  const permissions = [
+   467→    { label: "Access Meta Ad Library pages", desc: "Read ad creatives & metadata on facebook.com/ads/library", granted: true },
+   468→    { label: "Storage", desc: "Save ad screenshots & metadata locally in your browser", granted: true },
+   469→    { label: "Notifications", desc: "Show desktop alerts for new competitor ads", granted: true },
+   470→    { label: "Tabs", desc: "Detect when you're viewing a tracked advertiser's page", granted: false },
+   471→  ];
+   472→
+   473→  return (
+   474→    <div className="space-y-6">
+   475→      <Card className="p-5">
+   476→        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+   477→          <div>
+   478→            <h2 className="font-semibold flex items-center gap-2">
+   479→              <Puzzle className="h-4 w-4 text-sunset-deep" /> Chrome Extension
+   480→            </h2>
+   481→            <p className="text-xs text-muted-foreground mt-0.5">
+   482→              Status, updates &amp; permissions for the AdSpy Lite scraper
+   483→            </p>
+   484→          </div>
+   485→          <Badge className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400 shrink-0">
+   486→            <span className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
+   487→            Installed v2.4.1
+   488→          </Badge>
+   489→        </div>
+   490→
+   491→        <div className="flex items-center gap-3 p-4 rounded-lg bg-sunset-cream/30 border border-sunset-cream/60">
+   492→          <div className="h-10 w-10 rounded-lg bg-sunset-gradient flex items-center justify-center shrink-0">
+   493→            <Chrome className="h-5 w-5 text-white" />
+   494→          </div>
+   495→          <div className="flex-1 min-w-0">
+   496→            <p className="text-sm font-medium">AdSpy Lite Scraper</p>
+   497→            <p className="text-xs text-muted-foreground">
+   498→              Last sync 2 minutes ago · Connected to this browser
+   499→            </p>
+   500→          </div>
+   501→          <Button
+   502→            size="sm"
+   503→            variant="outline"
+   504→            onClick={() => sonnerToast.success("You're on the latest version ✓")}
+   505→          >
+   506→            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+   507→            Check for updates
+   508→          </Button>
+   509→        </div>
+   510→      </Card>
+   511→
+   512→      <Card className="p-5">
+   513→        <div className="mb-4">
+   514→          <h2 className="font-semibold flex items-center gap-2">
+   515→            <Lock className="h-4 w-4 text-sunset-deep" /> Permissions
+   516→          </h2>
+   517→          <p className="text-xs text-muted-foreground mt-0.5">
+   518→            What the extension is allowed to access
+   519→          </p>
+   520→        </div>
+   521→
+   522→        <div className="divide-y">
+   523→          {permissions.map((p) => (
+   524→            <div key={p.label} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+   525→              <div
+   526→                className={cn(
+   527→                  "h-7 w-7 rounded-full flex items-center justify-center shrink-0",
+   528→                  p.granted
+   529→                    ? "bg-green-100 dark:bg-green-950/40"
+   530→                    : "bg-muted"
+   531→                )}
+   532→              >
+   533→                {p.granted ? (
+   534→                  <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+   535→                ) : (
+   536→                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+   537→                )}
+   538→              </div>
+   539→              <div className="flex-1 min-w-0">
+   540→                <p className="text-sm font-medium">{p.label}</p>
+   541→                <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
+   542→              </div>
+   543→              <Badge
+   544→                variant={p.granted ? "secondary" : "outline"}
+   545→                className={cn(
+   546→                  "text-[10px] shrink-0",
+   547→                  p.granted && "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+   548→                )}
+   549→              >
+   550→                {p.granted ? "Granted" : "Not granted"}
+   551→              </Badge>
+   552→            </div>
+   553→          ))}
+   554→        </div>
+   555→      </Card>
+   556→    </div>
+   557→  );
+   558→}
+   559→
+   560→/* ---------------- Privacy ---------------- */
+   561→
+   562→function PrivacySection() {
+   563→  const [retention, setRetention] = useState("90d");
+   564→
+   565→  return (
+   566→    <Card className="p-5">
+   567→      <div className="mb-4">
+   568→        <h2 className="font-semibold flex items-center gap-2">
+   569→          <Shield className="h-4 w-4 text-sunset-deep" /> Privacy &amp; Data
+   570→        </h2>
+   571→        <p className="text-xs text-muted-foreground mt-0.5">
+   572→          Control how long we keep your data and exercise your GDPR rights
+   573→        </p>
+   574→      </div>
+   575→
+   576→      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+   577→        <div>
+   578→          <Label className="text-sm font-medium">Data retention period</Label>
+   579→          <p className="text-xs text-muted-foreground mt-0.5">
+   580→            Saved ads &amp; metadata are auto-deleted after this window
+   581→          </p>
+   582→        </div>
+   583→        <Select
+   584→          value={retention}
+   585→          onValueChange={(v) => {
+   586→            setRetention(v);
+   587→            sonnerToast.success("Retention period updated");
+   588→          }}
+   589→        >
+   590→          <SelectTrigger className="w-full sm:w-[200px]">
+   591→            <SelectValue placeholder="Select period" />
+   592→          </SelectTrigger>
+   593→          <SelectContent>
+   594→            <SelectItem value="30d">30 days</SelectItem>
+   595→            <SelectItem value="90d">90 days</SelectItem>
+   596→            <SelectItem value="180d">6 months</SelectItem>
+   597→            <SelectItem value="365d">1 year</SelectItem>
+   598→            <SelectItem value="forever">Keep forever</SelectItem>
+   599→          </SelectContent>
+   600→        </Select>
+   601→      </div>
+   602→
+   603→      <Separator className="my-4" />
+   604→
+   605→      <div className="grid sm:grid-cols-2 gap-3">
+   606→        <button
+   607→          onClick={() => sonnerToast.success("Data export requested — ready within 24h")}
+   608→          className="flex items-start gap-3 p-4 rounded-lg border border-border/60 hover:border-sunset-orange/40 hover:bg-muted/30 transition-all text-left"
+   609→        >
+   610→          <div className="h-9 w-9 rounded-lg bg-sunset-gradient flex items-center justify-center shrink-0">
+   611→            <Download className="h-4 w-4 text-white" />
+   612→          </div>
+   613→          <div className="flex-1 min-w-0">
+   614→            <p className="text-sm font-medium">Download my data</p>
+   615→            <p className="text-xs text-muted-foreground mt-0.5">
+   616→              GDPR Article 20 — full machine-readable export of your data
+   617→            </p>
+   618→          </div>
+   619→        </button>
+   620→
+   621→        <button
+   622→          onClick={() => sonnerToast.warning("Deletion request submitted — you have 14 days to cancel")}
+   623→          className="flex items-start gap-3 p-4 rounded-lg border border-border/60 hover:border-red-400/60 hover:bg-red-50/40 dark:hover:bg-red-950/10 transition-all text-left"
+   624→        >
+   625→          <div className="h-9 w-9 rounded-lg bg-red-100 dark:bg-red-950/40 flex items-center justify-center shrink-0">
+   626→            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+   627→          </div>
+   628→          <div className="flex-1 min-w-0">
+   629→            <p className="text-sm font-medium">Request deletion</p>
+   630→            <p className="text-xs text-muted-foreground mt-0.5">
+   631→              GDPR Article 17 — permanently erase your account &amp; data
+   632→            </p>
+   633→          </div>
+   634→        </button>
+   635→      </div>
+   636→    </Card>
+   637→  );
+   638→}
+   639→
+   640→/* ---------------- About & Help ---------------- */
+   641→
+   642→function AboutSection() {
+   643→  const { setOnboardingSeen, setHelpOpen } = useAppStore();
+   644→  const [openReplay, setOpenReplay] = useState(false);
+   645→
+   646→  return (
+   647→    <div className="space-y-4">
+   648→      {/* Replay onboarding */}
+   649→      <Card className="p-5">
+   650→        <div className="flex items-start gap-3">
+   651→          <div className="h-10 w-10 rounded-xl bg-sunset-gradient flex items-center justify-center shrink-0">
+   652→            <Sparkles className="h-5 w-5 text-white" />
+   653→          </div>
+   654→          <div className="flex-1">
+   655→            <h2 className="font-semibold mb-1">Replay Onboarding Tour</h2>
+   656→            <p className="text-sm text-muted-foreground mb-3">
+   657→              New to AdSpy Lite or want a refresher? Replay the 4-step welcome tour to revisit how to save ads, organize folders, and analyze patterns.
+   658→            </p>
+   659→            <div className="flex items-center gap-2">
+   660→              <Button
+   661→                variant="outline"
+   662→                size="sm"
+   663→                onClick={() => setOpenReplay(true)}
+   664→              >
+   665→                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+   666→                Replay tour
+   667→              </Button>
+   668→              <Button variant="ghost" size="sm" onClick={() => sonnerToast.info("Onboarding marked as seen")}>
+   669→                Mark as seen
+   670→              </Button>
+   671→            </div>
+   672→          </div>
+   673→        </div>
+   674→        <Dialog open={openReplay} onOpenChange={setOpenReplay}>
+   675→          <DialogContent className="sm:max-w-sm">
+   676→            <DialogHeader>
+   677→              <DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-sunset-deep" /> Replay onboarding?</DialogTitle>
+   678→              <DialogDescription>
+   679→                The welcome tour will appear next time you enter the dashboard. Continue?
+   680→              </DialogDescription>
+   681→            </DialogHeader>
+   682→            <div className="flex justify-end gap-2 pt-2">
+   683→              <DialogClose asChild>
+   684→                <Button variant="outline" size="sm">Cancel</Button>
+   685→              </DialogClose>
+   686→              <DialogClose asChild>
+   687→                <Button
+   688→                  size="sm"
+   689→                  className="bg-sunset-gradient hover:opacity-90 text-white"
+   690→                  onClick={() => {
+   691→                    setOnboardingSeen(false);
+   692→                    sonnerToast.success("Onboarding will replay on next dashboard visit");
+   693→                  }}
+   694→                >
+   695→                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+   696→                  Replay
+   697→                </Button>
+   698→              </DialogClose>
+   699→            </div>
+   700→          </DialogContent>
+   701→        </Dialog>
+   702→      </Card>
+   703→
+   704→      {/* Keyboard shortcuts */}
+   705→      <Card className="p-5">
+   706→        <div className="flex items-start gap-3">
+   707→          <div className="h-10 w-10 rounded-xl bg-sunset-cream/60 flex items-center justify-center shrink-0">
+   708→            <Keyboard className="h-5 w-5 text-sunset-deep" />
+   709→          </div>
+   710→          <div className="flex-1">
+   711→            <h2 className="font-semibold mb-1">Keyboard Shortcuts</h2>
+   712→            <p className="text-sm text-muted-foreground mb-3">
+   713→              AdSpy Lite supports keyboard shortcuts for power users. Press <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-semibold">?</kbd> anywhere to see them, or open the command palette with <kbd className="rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-semibold">⌘K</kbd>.
+   714→            </p>
+   715→            <div className="grid grid-cols-2 gap-2 text-xs">
+   716→              {[
+   717→                { k: "⌘K", d: "Command palette" },
+   718→                { k: "?", d: "Shortcuts help" },
+   719→                { k: "G then D", d: "Go to Dashboard" },
+   720→                { k: "G then S", d: "Go to Saved Ads" },
+   721→                { k: "T", d: "Toggle theme" },
+   722→                { k: "N", d: "Notifications" },
+   723→              ].map((s) => (
+   724→                <div key={s.k} className="flex items-center justify-between rounded-md border border-border/60 px-2.5 py-1.5">
+   725→                  <span className="text-muted-foreground">{s.d}</span>
+   726→                  <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold">{s.k}</kbd>
+   727→                </div>
+   728→              ))}
+   729→            </div>
+   730→            <Button variant="outline" size="sm" className="mt-3" onClick={() => setHelpOpen(true)}>
+   731→              <Keyboard className="h-3.5 w-3.5 mr-1.5" />
+   732→              View all shortcuts
+   733→            </Button>
+   734→          </div>
+   735→        </div>
+   736→      </Card>
+   737→
+   738→      {/* Version info */}
+   739→      <Card className="p-5 bg-sunset-radial">
+   740→        <div className="flex items-start gap-3">
+   741→          <div className="h-10 w-10 rounded-xl bg-sunset-gradient flex items-center justify-center shrink-0">
+   742→            <Info className="h-5 w-5 text-white" />
+   743→          </div>
+   744→          <div className="flex-1">
+   745→            <h2 className="font-semibold mb-1">About AdSpy Lite</h2>
+   746→            <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+   747→              <div className="rounded-md bg-card border border-border/60 px-3 py-2">
+   748→                <p className="text-muted-foreground">Version</p>
+   749→                <p className="font-semibold">v2.4.1 (web)</p>
+   750→              </div>
+   751→              <div className="rounded-md bg-card border border-border/60 px-3 py-2">
+   752→                <p className="text-muted-foreground">Extension</p>
+   753→                <p className="font-semibold">v2.4.1 — Installed</p>
+   754→              </div>
+   755→              <div className="rounded-md bg-card border border-border/60 px-3 py-2">
+   756→                <p className="text-muted-foreground">Last sync</p>
+   757→                <p className="font-semibold">2 min ago</p>
+   758→              </div>
+   759→              <div className="rounded-md bg-card border border-border/60 px-3 py-2">
+   760→                <p className="text-muted-foreground">Region</p>
+   761→                <p className="font-semibold">South Asia</p>
+   762→              </div>
+   763→            </div>
+   764→            <div className="flex items-center gap-3 mt-3 text-xs">
+   765→              <button className="text-sunset-deep hover:underline">Changelog</button>
+   766→              <span className="text-muted-foreground">·</span>
+   767→              <button className="text-sunset-deep hover:underline">Documentation</button>
+   768→              <span className="text-muted-foreground">·</span>
+   769→              <button className="text-sunset-deep hover:underline">Support</button>
+   770→            </div>
+   771→          </div>
+   772→        </div>
+   773→      </Card>
+   774→    </div>
+   775→  );
+   776→}
+   777→
+   778→/* ---------------- Danger Zone ---------------- */
+   779→
+   780→function DangerSection() {
+   781→  const [confirmText, setConfirmText] = useState("");
+   782→  const [open, setOpen] = useState(false);
+   783→
+   784→  return (
+   785→    <Card className="p-5 border-red-300/60 dark:border-red-900/40">
+   786→      <div className="mb-4">
+   787→        <h2 className="font-semibold flex items-center gap-2 text-red-600 dark:text-red-400">
+   788→          <AlertTriangle className="h-4 w-4" /> Danger Zone
+   789→        </h2>
+   790→        <p className="text-xs text-muted-foreground mt-0.5">
+   791→          Irreversible &amp; destructive actions — proceed with caution
+   792→        </p>
+   793→      </div>
+   794→
+   795→      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50/60 dark:bg-red-950/10 border border-red-200/60 dark:border-red-900/40">
+   796→        <div className="min-w-0">
+   797→          <p className="text-sm font-medium">Delete this account</p>
+   798→          <p className="text-xs text-muted-foreground mt-0.5">
+   799→            All 101 saved ads, 6 competitors &amp; team membership will be permanently removed.
+   800→            This action cannot be undone.
+   801→          </p>
+   802→        </div>
+   803→
+   804→        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(""); }}>
+   805→          <DialogTrigger asChild>
+   806→            <Button variant="destructive" size="sm" className="shrink-0">
+   807→              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+   808→              Delete account
+   809→            </Button>
+   810→          </DialogTrigger>
+   811→          <DialogContent>
+   812→            <DialogHeader>
+   813→              <DialogTitle className="flex items-center gap-2">
+   814→                <AlertTriangle className="h-5 w-5 text-red-500" />
+   815→                Delete account permanently?
+   816→              </DialogTitle>
+   817→              <DialogDescription>
+   818→                This will erase everything associated with{" "}
+   819→                <span className="font-medium text-foreground">ayesha@adspy.agency</span> —
+   820→                saved ads, folders, competitor trackers, notes, billing history &amp; team access.
+   821→                <br />
+   822→                <br />
+   823→                To confirm, type <span className="font-mono font-semibold text-red-600 dark:text-red-400">DELETE MY ACCOUNT</span> below.
+   824→              </DialogDescription>
+   825→            </DialogHeader>
+   826→
+   827→            <Input
+   828→              value={confirmText}
+   829→              onChange={(e) => setConfirmText(e.target.value)}
+   830→              placeholder="Type DELETE MY ACCOUNT"
+   831→              className="font-mono text-sm"
+   832→            />
+   833→
+   834→            <DialogFooter className="gap-2">
+   835→              <DialogClose asChild>
+   836→                <Button variant="outline">Cancel</Button>
+   837→              </DialogClose>
+   838→              <Button
+   839→                variant="destructive"
+   840→                disabled={confirmText !== "DELETE MY ACCOUNT"}
+   841→                onClick={() => {
+   842→                  setOpen(false);
+   843→                  setConfirmText("");
+   844→                  sonnerToast.error("Account scheduled for deletion — goodbye");
+   845→                }}
+   846→              >
+   847→                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+   848→                Delete forever
+   849→              </Button>
+   850→            </DialogFooter>
+   851→          </DialogContent>
+   852→        </Dialog>
+   853→      </div>
+   854→    </Card>
+   855→  );
+   856→}
+   857→
